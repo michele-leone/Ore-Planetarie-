@@ -1,0 +1,16 @@
+{
+  "name": "Ore planetarie",
+  "short_name": "Ore planetarie",
+  "description": "Ore planetarie diseguali secondo la catena caldea, con il cielo del reggente e la Luna.",
+  "lang": "it",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0E1A2B",
+  "theme_color": "#0E1A2B",
+  "icons": [
+    { "src": "icona-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

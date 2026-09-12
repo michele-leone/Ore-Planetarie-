@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ore planetarie</title>
+<meta name="description" content="Ore planetarie diseguali secondo la catena caldea, con il cielo del reggente e la Luna. Lexicon Symbolorum.">
+<meta name="theme-color" content="#0E1A2B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ore planetarie">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icona-180.png">
+<link rel="icon" href="icona-512.png">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root{
+  --notte:#0E1A2B;
+  --avorio:#E9E3D5;
+  --avorio-tenue:#9DA7B4;
+  --oro:#C9A227;
+  --oro-chiaro:#E3C14F;
+  --vermiglio:#B23A22;
+  --riga:rgba(233,227,213,.14);
+  --serif:"EB Garamond","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --glifi:"Apple Symbols","Segoe UI Symbol","Noto Sans Symbols 2","Noto Sans Symbols","EB Garamond",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--notte); color:var(--avorio); font-family:var(--serif);
+  font-size:18px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+main{max-width:38rem;margin:0 auto;padding:1.6rem 1.2rem 3rem}
+h1{font-size:1.5rem;font-weight:500;letter-spacing:.02em;margin:0 0 .1rem;text-align:center}
+.sottotitolo{text-align:center;color:var(--avorio-tenue);font-size:.95rem;font-style:italic;margin:0 0 1.4rem}
+.tenue{color:var(--avorio-tenue)}
+.piccolo{font-size:.85rem}
+
+/* controlli */
+.barra{display:flex;gap:.5rem;align-items:center;justify-content:center;flex-wrap:wrap;margin:0 0 .6rem}
+button,select,input{
+  font-family:var(--serif);font-size:1rem;color:var(--avorio);background:transparent;
+  border:1px solid var(--riga);border-radius:2px;padding:.42rem .7rem;
+}
+button{cursor:pointer}
+input{min-width:0}
+#citta{width:12rem}
+select option{background:var(--notte);color:var(--avorio)}
+button:hover,select:hover,input:hover{border-color:var(--oro)}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--oro-chiaro);outline-offset:2px}
+.coord{display:none;gap:.4rem;justify-content:center;margin-bottom:.6rem}
+.coord.visibile{display:flex;flex-wrap:wrap}
+.coord input{width:6.4rem}
+#esito-luogo{text-align:center;color:var(--vermiglio);font-size:.9rem;min-height:1.2rem;margin:0 0 .4rem}
+.data-nav{display:flex;align-items:center;gap:.5rem;justify-content:center;margin:.4rem 0 1.1rem;flex-wrap:wrap}
+.data-nav .etichetta{min-width:11rem;text-align:center}
+#etichetta-luogo{display:block;font-size:.85rem;color:var(--avorio-tenue)}
+
+/* quadrante */
+.quadrante{position:relative;width:100%;max-width:22rem;margin:0 auto}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.centro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+.glifo{font-size:3.4rem;line-height:1;color:var(--oro-chiaro);font-family:var(--glifi)}
+.reggente{font-size:1.35rem;letter-spacing:.04em;margin-top:.25rem}
+.posizione{color:var(--avorio-tenue);font-size:.9rem;margin-top:.15rem}
+.residuo{color:var(--avorio-tenue);font-size:.9rem;font-style:italic}
+.seg-giorno{fill:rgba(233,227,213,.13);stroke:var(--notte);stroke-width:1}
+.seg-notte{fill:rgba(6,12,22,.55);stroke:var(--notte);stroke-width:1}
+.seg-attivo{fill:rgba(201,162,39,.45);stroke:var(--notte);stroke-width:1}
+.bordo{fill:none;stroke:var(--riga);stroke-width:1}
+.glifo-arco{fill:var(--avorio-tenue);font-size:13px;text-anchor:middle;dominant-baseline:middle;font-family:var(--glifi)}
+.glifo-arco.attiva{fill:var(--oro-chiaro)}
+.lancetta{stroke:var(--vermiglio);stroke-width:2;stroke-linecap:round}
+.marca{fill:var(--avorio-tenue);font-size:12px;text-anchor:middle;font-family:var(--serif);letter-spacing:.06em}
+.tacca{stroke:rgba(233,227,213,.45);stroke-width:1}
+
+/* fasce */
+.efemeridi{display:flex;justify-content:center;gap:1.5rem;flex-wrap:wrap;margin:1.3rem 0 .2rem;color:var(--avorio-tenue);font-size:.95rem}
+.efemeridi b{color:var(--avorio);font-weight:500}
+.giorno-planetario{text-align:center;font-size:.95rem;color:var(--avorio-tenue);margin:.1rem 0 1.4rem}
+
+/* cielo e luna */
+.cielo{border-top:1px solid var(--riga);padding-top:1rem;margin-bottom:1.2rem}
+.cielo h2{font-size:1.05rem;font-weight:500;margin:0 0 .5rem;letter-spacing:.02em}
+.riga-cielo{margin:0 0 .2rem;font-size:1.05rem}
+.dignita{color:var(--oro-chiaro);font-style:italic}
+.luna-riga{display:flex;gap:1rem;align-items:center}
+.disco{width:60px;height:60px;flex:0 0 60px}
+.luna-ombra{fill:rgba(233,227,213,.08)}
+.luna-luce{fill:var(--avorio)}
+.luna-bordo{fill:none;stroke:var(--riga);stroke-width:1}
+.quarti{margin:.6rem 0 0;font-size:.88rem;line-height:1.7}
+
+/* tavola */
+table{width:100%;border-collapse:collapse;margin-top:.6rem}
+caption{text-align:left;color:var(--avorio-tenue);font-style:italic;font-size:.95rem;padding-bottom:.4rem}
+td,th{padding:.3rem .2rem;border-bottom:1px solid var(--riga);font-weight:400;text-align:left}
+th{color:var(--avorio-tenue);font-size:.85rem;letter-spacing:.04em}
+td.n{color:var(--avorio-tenue);width:2.2rem}
+td.g{width:1.8rem;font-size:1.15rem;color:var(--oro);font-family:var(--glifi)}
+td.o{text-align:right;color:var(--avorio-tenue);font-variant-numeric:tabular-nums}
+tr.ora-attiva td{background:rgba(201,162,39,.12);color:var(--avorio)}
+tr.ora-attiva td.g{color:var(--oro-chiaro)}
+tr.sep td{border-bottom:1px solid rgba(201,162,39,.35)}
+
+/* ricerca e nota */
+.cerca{margin-top:2rem;border-top:1px solid var(--riga);padding-top:1.2rem}
+.cerca h2{font-size:1.1rem;font-weight:500;margin:0 0 .6rem}
+.esiti{margin:.7rem 0 0;font-size:.95rem}
+.esiti div{padding:.22rem 0}
+.nota{margin-top:2rem;border-top:1px solid var(--riga);padding-top:1.2rem;color:var(--avorio-tenue);font-size:.93rem}
+.nota h2{font-size:1.1rem;font-weight:500;margin:0 0 .6rem;color:var(--avorio)}
+.nota p{margin:0 0 .8rem}
+.avviso{border:1px solid rgba(178,58,34,.5);background:rgba(178,58,34,.12);padding:.8rem .9rem;border-radius:2px;margin:1rem 0;font-size:.95rem}
+
+/* chiusura */
+.chiusura{margin-top:2.4rem;text-align:center}
+.chiusura img.firma{width:210px;max-width:60%;opacity:.75;display:block;margin:0 auto .9rem}
+.chiusura img.marchio{width:112px;opacity:.7;display:block;margin:0 auto .6rem}
+.chiusura a{color:var(--oro);text-decoration:none;border-bottom:1px solid rgba(201,162,39,.4);font-size:.9rem}
+
+@media (max-width:400px){
+  body{font-size:17px}
+  .glifo-arco{font-size:11px}
+  #citta{width:10rem}
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>Ore planetarie</h1>
+  <p class="sottotitolo">Ore diseguali secondo la catena caldea</p>
+
+  <div class="barra">
+    <input id="citta" list="elenco-luoghi" placeholder="città" aria-label="Luogo" autocomplete="off" spellcheck="false">
+    <datalist id="elenco-luoghi"></datalist>
+    <button id="geo" type="button">Dove sono</button>
+    <button id="coordinate-apri" type="button">Coordinate</button>
+  </div>
+  <div class="coord" id="coord">
+    <input id="lat" type="number" step="0.0001" placeholder="latitudine" aria-label="Latitudine">
+    <input id="lon" type="number" step="0.0001" placeholder="longitudine" aria-label="Longitudine">
+    <button id="applica" type="button">Applica</button>
+  </div>
+  <p id="esito-luogo" role="status"></p>
+
+  <div class="data-nav">
+    <button id="prec" type="button" aria-label="Giorno precedente">&#8592;</button>
+    <span class="etichetta"><span id="etichetta-data"></span><span id="etichetta-luogo"></span></span>
+    <button id="succ" type="button" aria-label="Giorno successivo">&#8594;</button>
+    <button id="oggi" type="button">oggi</button>
+  </div>
+
+  <div id="corpo"></div>
+
+  <section class="cerca">
+    <h2>Quando torna un pianeta</h2>
+    <div class="barra" style="justify-content:flex-start;margin-bottom:0">
+      <select id="pianeta" aria-label="Pianeta da cercare"></select>
+      <button id="trova" type="button">Trova le prossime ore</button>
+    </div>
+    <div class="esiti" id="esiti"></div>
+  </section>
+
+  <section class="nota">
+    <h2>Come si calcola</h2>
+    <p>Il giorno artificiale, dall'alba al tramonto, si divide in dodici parti uguali fra loro ma diseguali rispetto all'ora dell'orologio: d'estate l'ora diurna supera i sessanta minuti, d'inverno resta sotto. La notte, dal tramonto all'alba seguente, si divide allo stesso modo. La prima ora del giorno è retta dal pianeta che dà nome al giorno, e da lì la reggenza scorre lungo la catena caldea, in ordine discendente di sfera: Saturno, Giove, Marte, Sole, Venere, Mercurio, Luna; poi da capo, senza interruzione fra il dì e la notte.</p>
+    <p>Il giorno planetario comincia all'alba, non a mezzanotte. Alle tre di domenica notte si è ancora nelle ore notturne del sabato, e questa applicazione le attribuisce di conseguenza.</p>
+    <p>Alba e tramonto sono quelli visibili: l'istante in cui il lembo superiore del disco tocca l'orizzonte, tenuto conto della rifrazione atmosferica, a uno zenit di 90°50′. È la definizione che corrisponde all'osservazione, e l'osservazione è ciò su cui la tradizione fondava la divisione delle ore. L'orizzonte reale di un luogo, con i suoi rilievi, può spostare l'istante di qualche minuto.</p>
+    <p>Le dignità sono quattro e per segno soltanto: domicilio, esaltazione, detrimento, caduta. Domicili ed esaltazioni seguono Tolomeo, che li assegna per segno e non per grado; detrimento e caduta sono i segni opposti. Termini e faccie restano fuori, perché i sistemi divergono e la scelta esigerebbe un argomento che qui non avrebbe spazio. Riferimento: Claudio Tolomeo, <em>Tetrabiblos</em>, traduzione inglese di J. M. Ashmand, W. Foulsham &amp; Co., 1900, capitoli sulle case e sulle esaltazioni dei pianeti.</p>
+    <p>Le longitudini dei pianeti e della Luna sono eclittiche apparenti, riferite all'equinozio della data: lo zodiaco è dunque quello tropico. Il calcolo è stato confrontato con una libreria astronomica indipendente su tremila epoche fra il 2000 e il 2075: lo scarto massimo resta sotto il primo d'arco per tutti e sette i corpi. L'indicazione del segno può quindi essere incerta soltanto nei pochi minuti a cavallo di un ingresso.</p>
+    <p>Il disco lunare è disegnato con orientamento boreale: la parte illuminata sta a destra quando la Luna cresce, a sinistra quando cala.</p>
+    <p id="nota-fuso"></p>
+  </section>
+
+  <div class="chiusura">
+    <img class="firma" src="firma-michele-leone.png" alt="Michele Leone">
+    <img class="marchio" src="logo-lexicon.png" alt="Lexicon Symbolorum">
+    <a href="https://micheleleone.it">micheleleone.it</a>
+  </div>
+</main>
+
+<script src="astronomy.js"></script>
+<script src="luoghi.js"></script>
+<script src="ore.js"></script>
+</body>
+</html>

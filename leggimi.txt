@@ -1,0 +1,45 @@
+ORE PLANETARIE - Lexicon Symbolorum
+-----------------------------------
+
+CONTENUTO
+  index.html                  la pagina: struttura, stile, testi
+  ore.js                      il calcolo: ore diseguali, dignita, Luna
+  astronomy.js                libreria astronomy-engine 2.1.19, licenza MIT
+  luoghi.js                   124 luoghi: i capoluoghi italiani e dodici citta estere
+  manifest.json               dati per l'installazione sul telefono
+  sw.js                       gestore della cache, per il funzionamento offline
+  icona-180.png               icona per iPhone e iPad
+  icona-512.png               icona per Android
+  logo-lexicon.png            marchio in chiusura
+  firma-michele-leone.png     firma in chiusura
+
+PROVA SUL COMPUTER
+  Tieni tutti i file in una sola cartella e apri index.html con un doppio clic.
+  Aprendo il file in locale il pulsante "Dove sono" non funziona e l'applicazione
+  non si installa: i browser concedono posizione e installazione solo su https.
+  Per la prova scrivi il nome di una citta nel campo in alto.
+
+PUBBLICAZIONE SU GITHUB PAGES
+  1. Crea un repository pubblico nuovo; il nome diventa parte dell'indirizzo.
+  2. Carica dentro tutti e dieci i file, senza sottocartelle.
+  3. Impostazioni del repository, sezione Pages: come sorgente scegli il ramo
+     principale e la cartella radice.
+  4. Dopo qualche minuto l'applicazione risponde a
+     https://TUONOME.github.io/NOMEREPOSITORY/
+  5. Metti quell'indirizzo nel post Patreon.
+
+PUBBLICAZIONE SU UN SITO PROPRIO
+  Carica la cartella nella radice del sito; l'indirizzo sara il nome della cartella.
+
+AGGIORNAMENTI
+  Quando sostituisci un file, alza il numero di versione nella terza riga di sw.js
+  (ore-planetarie-v2 diventa ore-planetarie-v3), altrimenti i telefoni continuano
+  a mostrare la copia vecchia.
+
+INSTALLAZIONE SUL TELEFONO
+  iPhone: apri l'indirizzo in Safari, tocca Condividi, poi Aggiungi a Home.
+  Android: apri in Chrome, menu a tre punti, Installa applicazione.
+
+DA COMPLETARE
+  Luna fuori corso, gradi di esaltazione, etichetta di combustione: in attesa
+  della verifica sui testi.
