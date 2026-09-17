@@ -22,6 +22,11 @@ self.addEventListener("activate", (e) => {
     caches.keys()
       .then((k) => Promise.all(k.filter((n) => n !== CACHE).map((n) => caches.delete(n))))
       .then(() => self.clients.claim())
+      // le pagine gia' aperte mostrano ancora la versione precedente: le ricarichiamo
+      // noi, cosi' chi usa l'applicazione non deve fare nulla.
+      .then(() => self.clients.matchAll({ type: "window" }))
+      .then((finestre) => finestre.forEach((f) => { try { f.navigate(f.url); } catch (err) {} }))
+      .catch(() => {})
   );
 });
 

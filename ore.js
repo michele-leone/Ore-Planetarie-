@@ -520,13 +520,59 @@ function avvio(){
     try{ navigator.serviceWorker.register("sw.js"); }catch(e){}
   }
 }
+/* ---------- riparazione automatica ----------
+   Se la pagina servita dalla cache non corrisponde a questo programma, l'applicazione
+   si ripara da se': cancella il vecchio meccanismo offline e ricarica una volta sola.
+   Nessun intervento richiesto a chi la usa. */
+function paginaCoerente(){
+  return !!(document.getElementById("proposte") && document.getElementById("corpo"));
+}
+function ripara(){
+  let giaFatto=false;
+  try{ giaFatto = sessionStorage.getItem("ore-riparazione")==="1"; }catch(e){}
+  if(giaFatto) return false;
+  try{ sessionStorage.setItem("ore-riparazione","1"); }catch(e){}
+  const compiti=[];
+  if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
+    compiti.push(navigator.serviceWorker.getRegistrations()
+      .then(function(rr){ return Promise.all(rr.map(function(r){ return r.unregister(); })); })
+      .catch(function(){}));
+  }
+  if(window.caches && caches.keys){
+    compiti.push(caches.keys()
+      .then(function(kk){ return Promise.all(kk.map(function(k){ return caches.delete(k); })); })
+      .catch(function(){}));
+  }
+  const vai=function(){
+    const base=location.pathname.replace(/[^/]*$/,"");
+    location.replace(base+"?r="+Date.now());
+  };
+  Promise.all(compiti).then(vai, vai);
+  setTimeout(vai, 3000);
+  return true;
+}
+function pulisciIndirizzo(){
+  if(/[?&]r=\d+/.test(location.search) && history.replaceState){
+    try{ history.replaceState({}, "", location.pathname); }catch(e){}
+  }
+}
+
 if(typeof document!=="undefined" && document.getElementById("corpo")){
-  try{ avvio(); }
-  catch(errore){
-    document.getElementById("corpo").innerHTML=
-      '<div class="avviso">Questa pagina e il programma che la anima non appartengono alla stessa versione, '
-      +'di solito perch\u00e9 il browser conserva una copia vecchia. Ricarica la pagina tenendo premuto il tasto '
-      +'delle maiuscole; se non basta, chiudi del tutto l\'applicazione e riaprila.</div>';
-    if(window.console) console.error(errore);
+  if(!paginaCoerente()){
+    if(!ripara()){
+      document.getElementById("corpo").innerHTML=
+        '<div class="avviso">Il browser continua a servire una copia vecchia di questa pagina. '
+        +'Attendi qualche minuto e riapri l\'indirizzo: la copia scade da se\u0301.</div>';
+    }
+  } else {
+    pulisciIndirizzo();
+    try{ avvio(); }
+    catch(errore){
+      if(!ripara()){
+        document.getElementById("corpo").innerHTML=
+          '<div class="avviso">Si e\u0301 verificato un errore imprevisto. Riapri l\'indirizzo fra qualche minuto.</div>';
+      }
+      if(window.console) console.error(errore);
+    }
   }
 }
