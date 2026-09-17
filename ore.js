@@ -520,4 +520,13 @@ function avvio(){
     try{ navigator.serviceWorker.register("sw.js"); }catch(e){}
   }
 }
-if(typeof document!=="undefined" && document.getElementById("corpo")) avvio();
+if(typeof document!=="undefined" && document.getElementById("corpo")){
+  try{ avvio(); }
+  catch(errore){
+    document.getElementById("corpo").innerHTML=
+      '<div class="avviso">Questa pagina e il programma che la anima non appartengono alla stessa versione, '
+      +'di solito perch\u00e9 il browser conserva una copia vecchia. Ricarica la pagina tenendo premuto il tasto '
+      +'delle maiuscole; se non basta, chiudi del tutto l\'applicazione e riaprila.</div>';
+    if(window.console) console.error(errore);
+  }
+}
