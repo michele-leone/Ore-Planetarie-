@@ -156,6 +156,33 @@ function durata(ms){
   return h===0 ? min+" min" : h+" h "+(m<10?"0":"")+m;
 }
 function gradi(x){ return Math.floor(x)+"\u00B0"+(Math.floor((x%1)*60)<10?"0":"")+Math.floor((x%1)*60)+"\u2032"; }
+function senzaAccenti(x){
+  return x.toLowerCase()
+    .replace(/[àáâä]/g,"a").replace(/[èéêë]/g,"e").replace(/[ììíîï]/g,"i")
+    .replace(/[òóôö]/g,"o").replace(/[ùúûü]/g,"u").replace(/['’\-]/g," ")
+    .replace(/\s+/g," ").trim();
+}
+function distanzaKm(la1,lo1,la2,lo2){
+  const dy=(la2-la1)*110.574;
+  const dx=(lo2-lo1)*111.320*Math.cos((la1+la2)/2*RAD);
+  return Math.sqrt(dx*dx+dy*dy);
+}
+function comunePiuVicino(la,lo){
+  let best=null, bestD=Infinity;
+  for(let i=0;i<LUOGHI.length;i++){
+    const l=LUOGHI[i];
+    const d=distanzaKm(la,lo,l[2],l[3]);
+    if(d<bestD){ bestD=d; best=l; }
+  }
+  return best ? {luogo:best, km:bestD} : null;
+}
+function descriviPosizione(la,lo){
+  const v=comunePiuVicino(la,lo);
+  if(!v) return "la tua posizione";
+  if(v.km<0.8) return "la tua posizione, a "+v.luogo[0]+" ("+v.luogo[1]+")";
+  const km = v.km<10 ? v.km.toFixed(1).replace(".",",") : Math.round(v.km);
+  return "la tua posizione, a "+km+" km da "+v.luogo[0]+" ("+v.luogo[1]+")";
+}
 function eventiPerData(d){ return eventiSolari(d.getFullYear(), d.getMonth()+1, d.getDate(), luogo.lat, luogo.lon); }
 function giornoSpostato(n){ const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()+n); return d; }
 
@@ -341,6 +368,15 @@ function resa(){
       +'<thead><tr><th>n.</th><th></th><th>reggente</th><th style="text-align:right">inizio</th></tr></thead><tbody>';
   for(let i=0;i<24;i++){
     const x=g.ore[i];
+    if(i>0){
+      const prima=-g.ore[i-1].inizio.getTimezoneOffset(), dopo=-x.inizio.getTimezoneOffset();
+      if(prima!==dopo){
+        const avanti=dopo>prima, salto=Math.abs(dopo-prima);
+        html+='<tr class="transizione"><td colspan="4">l\'orologio va '
+          +(avanti?"avanti":"indietro")+' di '+(salto===60?"un\'ora":salto+" minuti")
+          +'; la durata dell\'ora planetaria non cambia</td></tr>';
+      }
+    }
     html+='<tr class="'+(i===attiva?"ora-attiva ":"")+(i===11?"sep":"")+'">'
        +'<td class="n">'+x.posizione+'</td><td class="g">'+x.pianeta.glifo+'</td>'
        +'<td>'+x.pianeta.nome+'<span class="tenue piccolo"> · '+(x.notturna?"notte":"giorno")+'</span></td>'
@@ -375,28 +411,69 @@ function trovaPianeta(nome){
 
 /* ---------- interfaccia ---------- */
 function avvio(){
-  const elenco=document.getElementById("elenco-luoghi");
-  elenco.innerHTML=LUOGHI.map(function(l){ return '<option value="'+l[0]+'"></option>'; }).join("");
   const campo=document.getElementById("citta");
-  campo.value = (luogo.nome.indexOf("coordinate")===0 || luogo.nome.indexOf("posizione")>=0) ? "" : luogo.nome;
+  const proposte=document.getElementById("proposte");
+  const esito=document.getElementById("esito-luogo");
+  campo.value = /posizione|^-?\d+[.,]\d+,/.test(luogo.nome) ? "" : luogo.nome;
 
   document.getElementById("pianeta").innerHTML=CALDEA.map(function(p){ return '<option>'+p.nome+'</option>'; }).join("");
 
-  function cerca(){
-    const v=campo.value.trim().toLowerCase();
-    if(!v) return;
-    let trovato=null;
-    for(let i=0;i<LUOGHI.length;i++){ if(LUOGHI[i][0].toLowerCase()===v){ trovato=LUOGHI[i]; break; } }
-    if(!trovato) for(let i=0;i<LUOGHI.length;i++){ if(LUOGHI[i][0].toLowerCase().indexOf(v)===0){ trovato=LUOGHI[i]; break; } }
-    if(!trovato){ document.getElementById("esito-luogo").textContent="Nessun luogo con questo nome. Prova con un capoluogo, oppure usa le coordinate."; return; }
-    document.getElementById("esito-luogo").textContent="";
-    campo.value=trovato[0];
-    luogo={nome:trovato[0], lat:trovato[1], lon:trovato[2]};
+  let correnti=[];
+  function chiudiProposte(){ proposte.innerHTML=""; proposte.classList.remove("aperte"); correnti=[]; }
+  function scegli(l){
+    chiudiProposte();
+    esito.textContent="";
+    campo.value=l[0];
+    campo.blur();
+    luogo={nome:l[0]+" ("+l[1]+")", lat:l[2], lon:l[3]};
     Mem.set("ore-luogo",JSON.stringify(luogo));
     resa();
   }
-  campo.addEventListener("change", cerca);
-  campo.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); cerca(); } });
+  function cerca(testo, quanti){
+    const v=senzaAccenti(testo);
+    if(v.length<2) return [];
+    const inizia=[], dentro=[];
+    for(let i=0;i<LUOGHI.length && inizia.length<60;i++){
+      const n=senzaAccenti(LUOGHI[i][0]);
+      if(n===v) inizia.unshift(LUOGHI[i]);
+      else if(n.indexOf(v)===0) inizia.push(LUOGHI[i]);
+      else if(dentro.length<20 && n.indexOf(v)>0) dentro.push(LUOGHI[i]);
+    }
+    inizia.sort(function(a,b){
+      const na=senzaAccenti(a[0]), nb=senzaAccenti(b[0]);
+      if((na===v)!==(nb===v)) return na===v ? -1 : 1;
+      if(na.length!==nb.length) return na.length-nb.length;
+      return na<nb ? -1 : 1;
+    });
+    return inizia.concat(dentro).slice(0,quanti);
+  }
+  function mostraProposte(){
+    const t=campo.value.trim();
+    if(t.length<2){ chiudiProposte(); return; }
+    correnti=cerca(t,8);
+    if(!correnti.length){ chiudiProposte(); return; }
+    proposte.innerHTML=correnti.map(function(l,i){
+      return '<li role="option" data-i="'+i+'">'+l[0]+' <span class="tenue">('+l[1]+')</span></li>';
+    }).join("");
+    proposte.classList.add("aperte");
+  }
+  campo.addEventListener("input", function(){ esito.textContent=""; mostraProposte(); });
+  campo.addEventListener("focus", mostraProposte);
+  proposte.addEventListener("mousedown", function(e){
+    const li=e.target.closest("li"); if(!li) return;
+    e.preventDefault(); scegli(correnti[Number(li.dataset.i)]);
+  });
+  campo.addEventListener("keydown", function(e){
+    if(e.key==="Enter"){
+      e.preventDefault();
+      const t=campo.value.trim();
+      if(t.length<2) return;
+      const r=correnti.length?correnti:cerca(t,1);
+      if(r.length) scegli(r[0]);
+      else esito.textContent="Nessun comune con questo nome. Controlla la grafia, oppure usa le coordinate.";
+    } else if(e.key==="Escape"){ chiudiProposte(); }
+  });
+  campo.addEventListener("blur", function(){ setTimeout(chiudiProposte,120); });
 
   document.getElementById("coordinate-apri").addEventListener("click",function(){
     document.getElementById("coord").classList.toggle("visibile");
@@ -404,9 +481,9 @@ function avvio(){
   document.getElementById("applica").addEventListener("click",function(){
     const la=parseFloat(document.getElementById("lat").value), lo=parseFloat(document.getElementById("lon").value);
     if(isNaN(la)||isNaN(lo)||Math.abs(la)>90||Math.abs(lo)>180){
-      document.getElementById("esito-luogo").textContent="Latitudine fra -90 e 90, longitudine fra -180 e 180."; return;
+      esito.textContent="Latitudine fra -90 e 90, longitudine fra -180 e 180."; return;
     }
-    document.getElementById("esito-luogo").textContent="";
+    esito.textContent="";
     luogo={nome:la.toFixed(3)+", "+lo.toFixed(3), lat:la, lon:lo};
     campo.value="";
     Mem.set("ore-luogo",JSON.stringify(luogo));
@@ -414,18 +491,19 @@ function avvio(){
   });
   document.getElementById("geo").addEventListener("click",function(){
     const b=this;
-    if(!navigator.geolocation){ document.getElementById("esito-luogo").textContent="Questo dispositivo non fornisce la posizione."; return; }
-    b.textContent="Cerco…";
+    if(!navigator.geolocation){ esito.textContent="Questo dispositivo non fornisce la posizione."; return; }
+    b.textContent="Cerco…"; b.disabled=true;
     navigator.geolocation.getCurrentPosition(function(pos){
-      luogo={nome:"la tua posizione", lat:pos.coords.latitude, lon:pos.coords.longitude};
+      const la=pos.coords.latitude, lo=pos.coords.longitude;
+      luogo={nome:descriviPosizione(la,lo), lat:la, lon:lo};
       Mem.set("ore-luogo",JSON.stringify(luogo));
-      b.textContent="Dove sono"; campo.value="";
-      document.getElementById("esito-luogo").textContent="";
+      b.textContent="Dove sono"; b.disabled=false;
+      campo.value=""; esito.textContent=""; chiudiProposte();
       resa();
     },function(){
-      b.textContent="Dove sono";
-      document.getElementById("esito-luogo").textContent="Posizione non disponibile. Scrivi il nome di una città o inserisci le coordinate.";
-    },{timeout:10000,maximumAge:600000});
+      b.textContent="Dove sono"; b.disabled=false;
+      esito.textContent="Posizione non disponibile. Scrivi il nome di un comune o inserisci le coordinate.";
+    },{timeout:10000,maximumAge:600000,enableHighAccuracy:false});
   });
   document.getElementById("prec").addEventListener("click",function(){ scarto--; resa(); });
   document.getElementById("succ").addEventListener("click",function(){ scarto++; resa(); });

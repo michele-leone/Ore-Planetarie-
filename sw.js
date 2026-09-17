@@ -1,5 +1,5 @@
 /* Ore planetarie - service worker, cache-first sui file propri */
-const CACHE = "ore-planetarie-v2";
+const CACHE = "ore-planetarie-v3";
 const FILE = ["./", "./index.html", "./astronomy.js", "./luoghi.js", "./ore.js",
               "./manifest.json", "./icona-180.png", "./icona-512.png",
               "./logo-lexicon.png", "./firma-michele-leone.png"];
