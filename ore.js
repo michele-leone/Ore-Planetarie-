@@ -520,59 +520,83 @@ function avvio(){
     try{ navigator.serviceWorker.register("sw.js"); }catch(e){}
   }
 }
-/* ---------- riparazione automatica ----------
-   Se la pagina servita dalla cache non corrisponde a questo programma, l'applicazione
-   si ripara da se': cancella il vecchio meccanismo offline e ricarica una volta sola.
-   Nessun intervento richiesto a chi la usa. */
-function paginaCoerente(){
-  return !!(document.getElementById("proposte") && document.getElementById("corpo"));
-}
-function ripara(){
-  let giaFatto=false;
-  try{ giaFatto = sessionStorage.getItem("ore-riparazione")==="1"; }catch(e){}
-  if(giaFatto) return false;
-  try{ sessionStorage.setItem("ore-riparazione","1"); }catch(e){}
-  const compiti=[];
-  if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
-    compiti.push(navigator.serviceWorker.getRegistrations()
-      .then(function(rr){ return Promise.all(rr.map(function(r){ return r.unregister(); })); })
-      .catch(function(){}));
+/* ---------- struttura ----------
+   L'applicazione costruisce da se' gli elementi e gli stili che le servono,
+   cosi' funziona anche con una pagina piu' vecchia gia' pubblicata. */
+const STILE_AGGIUNTO = ""
+ + ".campo-cerca{position:relative;display:inline-block}"
+ + "#proposte{display:none;position:absolute;z-index:20;left:0;top:calc(100% + 3px);"
+ + "width:15rem;max-height:15rem;overflow-y:auto;margin:0;padding:0;list-style:none;"
+ + "background:#132238;border:1px solid rgba(233,227,213,.14);border-radius:2px;"
+ + "box-shadow:0 8px 24px rgba(0,0,0,.45);text-align:left}"
+ + "#proposte.aperte{display:block}"
+ + "#proposte li{padding:.42rem .7rem;cursor:pointer;font-size:.98rem;"
+ + "border-bottom:1px solid rgba(233,227,213,.07);color:#E9E3D5}"
+ + "#proposte li:last-child{border-bottom:none}"
+ + "#proposte li:hover{background:rgba(201,162,39,.16)}"
+ + "#citta{width:12rem}"
+ + "tr.transizione td{color:#B23A22;font-style:italic;font-size:.85rem;"
+ + "background:rgba(178,58,34,.09);text-align:center;padding:.35rem .2rem}"
+ + ".tenue{color:#9DA7B4}.piccolo{font-size:.85rem}";
+
+const NOTE_AGGIUNTE = [
+ "L'ora legale non altera le ore planetarie, che si misurano sull'alba e sul tramonto veri e non sulle lancette. Nelle due notti dell'anno in cui l'orologio si sposta, la tavola segnala il passaggio con una riga apposita: gli orari d'inizio compiono un salto apparente, mentre la durata dell'ora resta quella indicata in alto.",
+ "I luoghi disponibili sono i 7.896 comuni italiani, con le coordinate ricavate dai confini amministrativi ISTAT e verificate una per una: ogni punto cade dentro il territorio del proprio comune. Le frazioni non sono comprese, perché un chilometro di distanza vale circa tre secondi sull'ora dell'alba, meno di quanto pesi il profilo reale dell'orizzonte; chi abiti fuori dal capoluogo comunale usi il rilevamento della posizione, che restituisce il punto esatto."
+];
+
+function assicuraStruttura(){
+  const campo=document.getElementById("citta");
+  if(!campo || !document.getElementById("corpo")) return false;
+
+  campo.placeholder="comune";
+  campo.removeAttribute("list");
+  campo.setAttribute("autocomplete","off");
+
+  const vecchioElenco=document.getElementById("elenco-luoghi");
+  if(vecchioElenco && vecchioElenco.parentNode) vecchioElenco.parentNode.removeChild(vecchioElenco);
+
+  if(!document.getElementById("proposte")){
+    let guscio=campo.parentNode;
+    if(!guscio || !guscio.className || guscio.className.indexOf("campo-cerca")<0){
+      guscio=document.createElement("span");
+      guscio.className="campo-cerca";
+      campo.parentNode.insertBefore(guscio, campo);
+      guscio.appendChild(campo);
+    }
+    const lista=document.createElement("ul");
+    lista.id="proposte";
+    lista.setAttribute("role","listbox");
+    lista.setAttribute("aria-label","Comuni proposti");
+    guscio.appendChild(lista);
   }
-  if(window.caches && caches.keys){
-    compiti.push(caches.keys()
-      .then(function(kk){ return Promise.all(kk.map(function(k){ return caches.delete(k); })); })
-      .catch(function(){}));
+
+  if(!document.getElementById("stile-ore")){
+    const st=document.createElement("style");
+    st.id="stile-ore";
+    st.appendChild(document.createTextNode(STILE_AGGIUNTO));
+    (document.head||document.documentElement).appendChild(st);
   }
-  const vai=function(){
-    const base=location.pathname.replace(/[^/]*$/,"");
-    location.replace(base+"?r="+Date.now());
-  };
-  Promise.all(compiti).then(vai, vai);
-  setTimeout(vai, 3000);
+
+  const ancora=document.getElementById("nota-fuso");
+  if(ancora && ancora.parentNode && !document.getElementById("nota-comuni")){
+    for(let i=0;i<NOTE_AGGIUNTE.length;i++){
+      const p=document.createElement("p");
+      if(i===1) p.id="nota-comuni";
+      p.appendChild(document.createTextNode(NOTE_AGGIUNTE[i]));
+      ancora.parentNode.insertBefore(p, ancora);
+    }
+  }
   return true;
-}
-function pulisciIndirizzo(){
-  if(/[?&]r=\d+/.test(location.search) && history.replaceState){
-    try{ history.replaceState({}, "", location.pathname); }catch(e){}
-  }
 }
 
 if(typeof document!=="undefined" && document.getElementById("corpo")){
-  if(!paginaCoerente()){
-    if(!ripara()){
-      document.getElementById("corpo").innerHTML=
-        '<div class="avviso">Il browser continua a servire una copia vecchia di questa pagina. '
-        +'Attendi qualche minuto e riapri l\'indirizzo: la copia scade da se\u0301.</div>';
-    }
-  } else {
-    pulisciIndirizzo();
-    try{ avvio(); }
-    catch(errore){
-      if(!ripara()){
-        document.getElementById("corpo").innerHTML=
-          '<div class="avviso">Si e\u0301 verificato un errore imprevisto. Riapri l\'indirizzo fra qualche minuto.</div>';
-      }
-      if(window.console) console.error(errore);
-    }
+  try{
+    assicuraStruttura();
+    avvio();
+  }catch(errore){
+    document.getElementById("corpo").innerHTML=
+      '<div class="avviso">Si è verificato un errore imprevisto nell\'avvio. '
+      +'Riapri l\'indirizzo fra qualche minuto.</div>';
+    if(window.console) console.error(errore);
   }
 }
