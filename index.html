@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ore planetarie">
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.json?v=3">
 <link rel="apple-touch-icon" href="icona-180.png">
 <link rel="icon" href="icona-512.png">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,6 +48,15 @@ button,select,input{
 button{cursor:pointer}
 input{min-width:0}
 #citta{width:12rem}
+.campo-cerca{position:relative;display:inline-block}
+#proposte{display:none;position:absolute;z-index:20;left:0;top:calc(100% + 3px);
+  width:15rem;max-height:15rem;overflow-y:auto;margin:0;padding:0;list-style:none;
+  background:#132238;border:1px solid var(--riga);border-radius:2px;
+  box-shadow:0 8px 24px rgba(0,0,0,.45);text-align:left}
+#proposte.aperte{display:block}
+#proposte li{padding:.42rem .7rem;cursor:pointer;font-size:.98rem;border-bottom:1px solid rgba(233,227,213,.07)}
+#proposte li:last-child{border-bottom:none}
+#proposte li:hover{background:rgba(201,162,39,.16)}
 select option{background:var(--notte);color:var(--avorio)}
 button:hover,select:hover,input:hover{border-color:var(--oro)}
 button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--oro-chiaro);outline-offset:2px}
@@ -105,6 +114,8 @@ td.o{text-align:right;color:var(--avorio-tenue);font-variant-numeric:tabular-num
 tr.ora-attiva td{background:rgba(201,162,39,.12);color:var(--avorio)}
 tr.ora-attiva td.g{color:var(--oro-chiaro)}
 tr.sep td{border-bottom:1px solid rgba(201,162,39,.35)}
+tr.transizione td{color:var(--vermiglio);font-style:italic;font-size:.85rem;
+  background:rgba(178,58,34,.09);text-align:center;padding:.35rem .2rem}
 
 /* ricerca e nota */
 .cerca{margin-top:2rem;border-top:1px solid var(--riga);padding-top:1.2rem}
@@ -135,8 +146,11 @@ tr.sep td{border-bottom:1px solid rgba(201,162,39,.35)}
   <p class="sottotitolo">Ore diseguali secondo la catena caldea</p>
 
   <div class="barra">
-    <input id="citta" list="elenco-luoghi" placeholder="città" aria-label="Luogo" autocomplete="off" spellcheck="false">
-    <datalist id="elenco-luoghi"></datalist>
+    <span class="campo-cerca">
+      <input id="citta" placeholder="comune" aria-label="Luogo" autocomplete="off" spellcheck="false"
+             role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="proposte">
+      <ul id="proposte" role="listbox" aria-label="Comuni proposti"></ul>
+    </span>
     <button id="geo" type="button">Dove sono</button>
     <button id="coordinate-apri" type="button">Coordinate</button>
   </div>
@@ -172,6 +186,8 @@ tr.sep td{border-bottom:1px solid rgba(201,162,39,.35)}
     <p>Alba e tramonto sono quelli visibili: l'istante in cui il lembo superiore del disco tocca l'orizzonte, tenuto conto della rifrazione atmosferica, a uno zenit di 90°50′. È la definizione che corrisponde all'osservazione, e l'osservazione è ciò su cui la tradizione fondava la divisione delle ore. L'orizzonte reale di un luogo, con i suoi rilievi, può spostare l'istante di qualche minuto.</p>
     <p>Le dignità sono quattro e per segno soltanto: domicilio, esaltazione, detrimento, caduta. Domicili ed esaltazioni seguono Tolomeo, che li assegna per segno e non per grado; detrimento e caduta sono i segni opposti. Termini e faccie restano fuori, perché i sistemi divergono e la scelta esigerebbe un argomento che qui non avrebbe spazio. Riferimento: Claudio Tolomeo, <em>Tetrabiblos</em>, traduzione inglese di J. M. Ashmand, W. Foulsham &amp; Co., 1900, capitoli sulle case e sulle esaltazioni dei pianeti.</p>
     <p>Le longitudini dei pianeti e della Luna sono eclittiche apparenti, riferite all'equinozio della data: lo zodiaco è dunque quello tropico. Il calcolo è stato confrontato con una libreria astronomica indipendente su tremila epoche fra il 2000 e il 2075: lo scarto massimo resta sotto il primo d'arco per tutti e sette i corpi. L'indicazione del segno può quindi essere incerta soltanto nei pochi minuti a cavallo di un ingresso.</p>
+    <p>L'ora legale non altera le ore planetarie, che si misurano sull'alba e sul tramonto veri e non sulle lancette. Nelle due notti dell'anno in cui l'orologio si sposta, la tavola segnala il passaggio con una riga apposita: gli orari d'inizio compiono un salto apparente, mentre la durata dell'ora resta quella indicata in alto.</p>
+    <p>I luoghi disponibili sono i 7.896 comuni italiani, con le coordinate ricavate dai confini amministrativi ISTAT e verificate una per una: ogni punto cade dentro il territorio del proprio comune. Le frazioni non sono comprese, perché un chilometro di distanza vale circa tre secondi sull'ora dell'alba, meno di quanto pesi il profilo reale dell'orizzonte; chi abiti fuori dal capoluogo comunale usi il rilevamento della posizione, che restituisce il punto esatto.</p>
     <p>Il disco lunare è disegnato con orientamento boreale: la parte illuminata sta a destra quando la Luna cresce, a sinistra quando cala.</p>
     <p id="nota-fuso"></p>
   </section>
@@ -183,8 +199,8 @@ tr.sep td{border-bottom:1px solid rgba(201,162,39,.35)}
   </div>
 </main>
 
-<script src="astronomy.js"></script>
-<script src="luoghi.js"></script>
-<script src="ore.js"></script>
+<script src="astronomy.js?v=3"></script>
+<script src="luoghi.js?v=3"></script>
+<script src="ore.js?v=3"></script>
 </body>
 </html>
